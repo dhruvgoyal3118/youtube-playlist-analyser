@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const pdf = require('pdfkit');
+const { constants } = require('crypto');
 
 let ctab,link='https://www.youtube.com/playlist?list=PLBlnK6fEyqRj9lld8sWIUNwlKfdUoPd1Y';
 let x=0;
@@ -29,13 +30,14 @@ let x=0;
         // let AllData =  await ctab.evaluate(getData,'#stats .style-scope.ytd-playlist-sidebar-primary-info-renderer')
         // console.log(typeof(AllData),AllData.noOfVideos,AllData.noOfViews);
         let totalVideos = AllData.noOfVideos.split(" ")[0];
-        // console.log(totalVideos);
+        let totalViews = AllData.noOfViews.split(" ")[0];
+        console.log(totalViews);
 
         let VidIn1Scroll  = await getCvideoLength();
         // console.log(VidIn1Scroll);
 
         
-        while (totalVideos-VidIn1Scroll>=20) {
+        while (totalVideos-VidIn1Scroll>0) {
             
            
             // console.log(totalVideos);
@@ -52,8 +54,20 @@ let x=0;
         let file_name = (name+".pdf").trim();
         let pdfDOC = new pdf
         pdfDOC.pipe(fs.createWriteStream(file_name));
-        pdfDOC.text(JSON.stringify(final_list));
+        // pdfDOC.text(JSON.stringify(final_list));
+        pdfDOC.font('Times-Bold').fontSize(24).text(`${name}`).moveDown();
+        pdfDOC.font('Times-Bold').fontSize(20).text(`Total Videos: ${totalVideos}`).moveDown();
+        pdfDOC.font('Times-Bold').fontSize(20).text(`Total Views: ${totalViews}`).moveDown();
+        for(let i=0;i<final_list.length;i++)
+        {
+            const title  = final_list[i].videoTitle;
+            const time = final_list[i].duration;
+            // console.log(title,time);
+            pdfDOC.font('Times-Roman').fontSize(16).text(`Video ${i+1}: ${title}(${time})`).moveDown(0.5);
+        }
+
         pdfDOC.end();
+        await browserInstance.close();
 
     } catch (error) {
             console.log('error is there');
